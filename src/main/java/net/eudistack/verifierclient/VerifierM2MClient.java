@@ -59,10 +59,14 @@ public interface VerifierM2MClient {
     }
 
     static VerifierM2MClient fromConfig(VerifierM2MClientConfig config) {
+        return fromConfig(config, false);
+    }
+
+    private static VerifierM2MClient fromConfig(VerifierM2MClientConfig config, boolean allowInsecureHttp) {
         var privateKey = EcKeyLoader.loadPrivateKey(config.privateKeyJwk());
         var credential = MachineCredential.parse(config.credentialJwt());
         CnfBindingValidator.validate(privateKey, credential);
-        return new VerifierM2MClientImpl(config.verifierUrl(), privateKey, credential);
+        return new VerifierM2MClientImpl(config.verifierUrl(), privateKey, credential, allowInsecureHttp);
     }
 
     /** Builder for {@link VerifierM2MClient}, taking the 3 configuration values directly. */
@@ -71,6 +75,7 @@ public interface VerifierM2MClient {
         private String verifierUrl;
         private String privateKeyJwk;
         private String credentialJwt;
+        private boolean allowInsecureHttp = false;
 
         private Builder() {}
 
@@ -100,6 +105,18 @@ public interface VerifierM2MClient {
         }
 
         /**
+         * Allows {@code verifierUrl} to use plain {@code http://} instead of requiring
+         * {@code https://}. <b>Test-only.</b> The {@code client_assertion} sent on every
+         * {@link #authenticate()} call is a replayable, bearer-equivalent credential valid
+         * for a short window — sending it over a cleartext channel lets a passive network
+         * observer capture and replay it. Never use this against a production Verifier.
+         */
+        public Builder allowInsecureHttp() {
+            this.allowInsecureHttp = true;
+            return this;
+        }
+
+        /**
          * Builds the client, eagerly validating the private key against the credential's
          * {@code cnf}.
          *
@@ -108,7 +125,7 @@ public interface VerifierM2MClient {
          */
         public VerifierM2MClient build() {
             var config = new VerifierM2MClientConfig(verifierUrl, privateKeyJwk, credentialJwt);
-            return fromConfig(config);
+            return fromConfig(config, allowInsecureHttp);
         }
 
         private static String readFile(Path path, String field) {
