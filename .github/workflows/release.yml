@@ -8,6 +8,11 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Pushing the v* tag is not the only approval — this job pauses here and waits for a
+    # manual approval in the Actions tab (required reviewer on this environment) before it
+    # runs. Maven Central releases can't be deleted once published, so this is a deliberate
+    # second checkpoint.
+    environment: maven-central-release
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
