@@ -70,6 +70,13 @@ public final class DidKeyCodec {
 
         BigInteger rhs = x.modPow(BigInteger.valueOf(3), p).add(a.multiply(x)).add(b).mod(p);
         BigInteger y = modSqrt(rhs, p);
+        // modSqrt returns SOME value for every input, even when rhs has no square root mod p
+        // (x is not a valid curve coordinate) — verify it's an actual root before trusting it,
+        // rather than relying on ECKey.Builder's own on-curve check as the only safety net.
+        if (!y.modPow(BigInteger.TWO, p).equals(rhs)) {
+            throw new InvalidConfigurationException(
+                    "did:key does not encode a point on the P-256 curve");
+        }
         if (y.testBit(0) == yIsEven) {
             y = p.subtract(y);
         }
