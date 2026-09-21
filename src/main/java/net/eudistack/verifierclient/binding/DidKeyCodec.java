@@ -1,6 +1,7 @@
 package net.eudistack.verifierclient.binding;
 
 import net.eudistack.verifierclient.exception.InvalidConfigurationException;
+import net.eudistack.verifierclient.jwt.P256Coordinates;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import java.math.BigInteger;
@@ -94,22 +95,15 @@ public final class DidKeyCodec {
             y = p.subtract(y);
         }
 
-        return new ECKey.Builder(Curve.P_256, toUnsignedFixed(x), toUnsignedFixed(y)).build();
+        return new ECKey.Builder(
+                        Curve.P_256, P256Coordinates.toBase64Url(x), P256Coordinates.toBase64Url(y))
+                .build();
     }
 
     // p mod 4 == 3 for secp256r1's prime, so y = rhs^((p+1)/4) mod p.
     private static BigInteger modSqrt(BigInteger value, BigInteger p) {
         BigInteger exponent = p.add(BigInteger.ONE).shiftRight(2);
         return value.modPow(exponent, p);
-    }
-
-    private static com.nimbusds.jose.util.Base64URL toUnsignedFixed(BigInteger coordinate) {
-        byte[] raw = coordinate.toByteArray();
-        byte[] fixed = new byte[32];
-        int srcOffset = Math.max(0, raw.length - 32);
-        int destOffset = Math.max(0, 32 - raw.length);
-        System.arraycopy(raw, srcOffset, fixed, destOffset, raw.length - srcOffset);
-        return com.nimbusds.jose.util.Base64URL.encode(fixed);
     }
 
     private static byte[] base58Decode(String input) {

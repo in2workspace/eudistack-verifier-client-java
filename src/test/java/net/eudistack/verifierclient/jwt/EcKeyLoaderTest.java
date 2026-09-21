@@ -59,4 +59,52 @@ class EcKeyLoaderTest {
                 .isInstanceOf(InvalidConfigurationException.class)
                 .hasMessageContaining("private component");
     }
+
+    @Test
+    void loadsAKeyFromARawHexScalarWithA0xPrefix() {
+        // Same d/x/y test vector used by P256ScalarMultiplierTest, DidKeyCodecTest and
+        // CnfBindingValidatorTest — independently computed (Python, cryptography.hazmat).
+        String hexScalar = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd";
+
+        ECKey loaded = EcKeyLoader.loadPrivateKey(hexScalar);
+
+        assertThat(loaded.getCurve()).isEqualTo(Curve.P_256);
+        assertThat(loaded.isPrivate()).isTrue();
+        assertThat(loaded.getX()).hasToString("LVYqYX6d-wQ31mE6A4b7ucJBjo6JV9TXqf17FRiIMno");
+        assertThat(loaded.getY()).hasToString("OOzX2baxZnRthbl0-4prn9K6s4uaQO3bYAijgNB4bM8");
+    }
+
+    @Test
+    void loadsAKeyFromARawHexScalarWithoutA0xPrefix() {
+        String hexScalar = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd";
+
+        ECKey loaded = EcKeyLoader.loadPrivateKey(hexScalar);
+
+        assertThat(loaded.getX()).hasToString("LVYqYX6d-wQ31mE6A4b7ucJBjo6JV9TXqf17FRiIMno");
+        assertThat(loaded.getY()).hasToString("OOzX2baxZnRthbl0-4prn9K6s4uaQO3bYAijgNB4bM8");
+    }
+
+    @Test
+    void loadsAKeyFromAShortHexScalarWithoutFullZeroPadding() {
+        // A scalar whose leading bytes are zero is sometimes handed out a few hex digits
+        // short of the full 32-byte width — still valid, just a smaller number.
+        ECKey loaded = EcKeyLoader.loadPrivateKey("0xabcd");
+
+        assertThat(loaded.getCurve()).isEqualTo(Curve.P_256);
+        assertThat(loaded.isPrivate()).isTrue();
+    }
+
+    @Test
+    void rejectsAHexScalarLongerThan32Bytes() {
+        String tooLong = "ab".repeat(33); // 66 hex digits = 33 bytes
+        assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey(tooLong))
+                .isInstanceOf(InvalidConfigurationException.class)
+                .hasMessageContaining("P-256 private scalar");
+    }
+
+    @Test
+    void rejectsAStringThatIsNeitherJwkNorValidHex() {
+        assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey("not-json-and-not-hex-either"))
+                .isInstanceOf(InvalidConfigurationException.class);
+    }
 }
