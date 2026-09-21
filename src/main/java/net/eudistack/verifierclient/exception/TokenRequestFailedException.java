@@ -3,6 +3,11 @@ package net.eudistack.verifierclient.exception;
 /**
  * Thrown when the Verifier's token endpoint responds with a non-2xx status, or the response
  * body cannot be parsed as an OAuth2 token response.
+ *
+ * <p><b>Logging note:</b> {@link #getMessage()} deliberately does not include the Verifier's
+ * response body — a hostile or compromised Verifier controls that content, and callers
+ * commonly log exception messages at INFO/ERROR by default. Use {@link #responseBody()} if
+ * you need it, and sanitize/size-limit it before logging.
  */
 public class TokenRequestFailedException extends VerifierClientException {
 
@@ -10,7 +15,8 @@ public class TokenRequestFailedException extends VerifierClientException {
     private final String responseBody;
 
     public TokenRequestFailedException(int httpStatus, String responseBody) {
-        super("Verifier token request failed with HTTP " + httpStatus + ": " + responseBody);
+        super("Verifier token request failed with HTTP " + httpStatus
+                + " (see responseBody() for the response, not included here)");
         this.httpStatus = httpStatus;
         this.responseBody = responseBody;
     }
