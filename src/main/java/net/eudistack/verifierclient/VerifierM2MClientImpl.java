@@ -18,9 +18,10 @@ final class VerifierM2MClientImpl implements VerifierM2MClient {
     private final MachineCredential credential;
     private final TokenEndpointClient httpClient;
 
-    VerifierM2MClientImpl(String verifierUrl, ECKey privateKey, MachineCredential credential) {
-        this.audience = toUri(verifierUrl);
-        this.tokenEndpoint = toUri(trimSlash(verifierUrl) + "/oidc/token");
+    VerifierM2MClientImpl(
+            String verifierUrl, ECKey privateKey, MachineCredential credential, boolean allowInsecureHttp) {
+        this.audience = toUri(verifierUrl, allowInsecureHttp);
+        this.tokenEndpoint = toUri(trimSlash(verifierUrl) + "/oidc/token", allowInsecureHttp);
         this.privateKey = privateKey;
         this.credential = credential;
         this.httpClient = new TokenEndpointClient();
@@ -36,11 +37,22 @@ final class VerifierM2MClientImpl implements VerifierM2MClient {
                 tokenEndpoint, credential.clientId(), clientAssertion, credential.tenant());
     }
 
-    private static URI toUri(String verifierUrl) {
+    private static URI toUri(String verifierUrl, boolean allowInsecureHttp) {
         try {
             URI uri = new URI(verifierUrl);
             if (uri.getScheme() == null || uri.getHost() == null) {
                 throw new InvalidConfigurationException("verifierUrl must be an absolute URL: " + verifierUrl);
+            }
+            boolean isHttps = "https".equalsIgnoreCase(uri.getScheme());
+            boolean isHttp = "http".equalsIgnoreCase(uri.getScheme());
+            if (!isHttps && !(isHttp && allowInsecureHttp)) {
+                throw new InvalidConfigurationException(
+                        "verifierUrl must use https (the client_assertion is a replayable "
+                                + "bearer-equivalent credential and must not be sent in cleartext); "
+                                + "found scheme '"
+                                + uri.getScheme()
+                                + "'. Use VerifierM2MClient.builder().allowInsecureHttp() only for local "
+                                + "testing against a non-TLS Verifier.");
             }
             return uri;
         } catch (URISyntaxException e) {

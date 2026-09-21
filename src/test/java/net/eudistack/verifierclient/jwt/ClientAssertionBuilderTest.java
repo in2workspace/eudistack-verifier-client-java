@@ -28,8 +28,6 @@ class ClientAssertionBuilderTest {
         long iatSeconds = claims.getIssueTime().toInstant().getEpochSecond();
         long expSeconds = claims.getExpirationTime().toInstant().getEpochSecond();
 
-        // A millisecond value mistakenly used as seconds would be ~1000x too large —
-        // this is the exact bug found in the deleted eudistack-core-issuer implementation.
         assertThat(iatSeconds).isCloseTo(nowSeconds, org.assertj.core.data.Offset.offset(5L));
         assertThat(expSeconds).isGreaterThan(iatSeconds).isLessThan(iatSeconds + 300);
     }
@@ -44,9 +42,8 @@ class ClientAssertionBuilderTest {
         var claims = SignedJWT.parse(clientAssertion).getJWTClaimsSet();
         String vpToken = (String) claims.getClaim("vp_token");
 
-        // The Verifier decodes vp_token with java.util.Base64.getDecoder() (standard
-        // alphabet). Decoding with the standard decoder must reproduce the original VP-JWT
-        // exactly — this is the exact interop gotcha called out in the reference script.
+        // vp_token must decode with the STANDARD Base64 alphabet (not URL-safe) to reproduce
+        // the original VP-JWT — see ClientAssertionBuilder's class Javadoc for why.
         String decoded = new String(Base64.getDecoder().decode(vpToken), StandardCharsets.US_ASCII);
         assertThat(decoded).isEqualTo(vpJwt);
     }

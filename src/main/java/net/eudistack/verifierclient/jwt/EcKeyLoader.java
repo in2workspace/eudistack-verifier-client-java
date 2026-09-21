@@ -34,9 +34,4 @@ public final class EcKeyLoader {
         }
         return ecKey;
     }
-
-    /** Derives the public JWK (kty, crv, x, y — no private material) from a private EC key. */
-    public static ECKey toPublicJwk(ECKey privateKey) {
-        return privateKey.toPublicJWK();
-    }
 }
