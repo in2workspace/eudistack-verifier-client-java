@@ -34,6 +34,16 @@ class DidKeyCodecTest {
     }
 
     @Test
+    void decodesADidUrlWithAVerificationMethodFragmentTheSameAsTheBareDidKey() {
+        String didUrl = KNOWN_DID_KEY + "#" + KNOWN_DID_KEY.substring("did:key:".length());
+
+        ECKey decoded = DidKeyCodec.decodeP256PublicKey(didUrl);
+
+        assertThat(decoded.getX().toString()).isEqualTo(EXPECTED_X);
+        assertThat(decoded.getY().toString()).isEqualTo(EXPECTED_Y);
+    }
+
+    @Test
     void rejectsAMalformedDidKey() {
         assertThatThrownBy(() -> DidKeyCodec.decodeP256PublicKey("did:key:z000invalid!!!"))
                 .isInstanceOf(InvalidConfigurationException.class);
