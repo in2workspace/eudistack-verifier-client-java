@@ -24,13 +24,24 @@ class MachineCredentialTest {
     }
 
     @Test
-    void extractsDidKeyCnfAsIs() {
-        String didKey = "did:key:zDnaekTestConfirmationKey";
-        String jwt = CredentialFixtures.machineCredentialJwt(didKey);
+    void extractsDidKeyCnfFromAKidReference() {
+        String didKeyUrl = "did:key:zDnaekTestConfirmationKey#zDnaekTestConfirmationKey";
+        Map<String, Object> cnf = Map.of("kid", didKeyUrl);
+        String jwt = CredentialFixtures.machineCredentialJwt(cnf);
 
         MachineCredential credential = MachineCredential.parse(jwt);
 
-        assertThat(credential.confirmationKey()).isEqualTo(didKey);
+        assertThat(credential.confirmationKey()).isEqualTo(didKeyUrl);
+    }
+
+    @Test
+    void rejectsABareDidKeyStringCnfNotWrappedInAnObject() {
+        String bareDidKey = "did:key:zDnaekTestConfirmationKey";
+        String jwt = CredentialFixtures.machineCredentialJwt(bareDidKey);
+
+        assertThatThrownBy(() -> MachineCredential.parse(jwt))
+                .isInstanceOf(InvalidConfigurationException.class)
+                .hasMessageContaining("JSON object");
     }
 
     @Test

@@ -124,15 +124,20 @@ authenticate.
 
 Before making any network call, `VerifierM2MClient` verifies that the public counterpart of
 your configured private key matches the credential's confirmation key. Two `cnf` encodings
-are supported:
+are supported, both per [RFC 7800](https://www.rfc-editor.org/rfc/rfc7800.html) (`cnf` is
+always a JSON object — never a bare string):
 
 ```json
 "cnf": { "jwk": { "kty": "EC", "crv": "P-256", "x": "...", "y": "..." } }
 ```
 
 ```json
-"cnf": "did:key:zDnaek9hf761hzFqLFZvTntvhEKfYKiCPaQbV4uXifYV8eHw6"
+"cnf": { "kid": "did:key:zDnaek9hf761hzFqLFZvTntvhEKfYKiCPaQbV4uXifYV8eHw6#zDnaek9hf761hzFqLFZvTntvhEKfYKiCPaQbV4uXifYV8eHw6" }
 ```
+
+The second form (RFC 7800 §3.4) identifies the key by reference: a DID URL — the `did:key`
+followed by a `#`-fragment naming a verification method in its DID document, which for
+`did:key` is always identical to the DID's own method-specific identifier.
 
 If they don't match, construction throws `CredentialKeyMismatchException` — this is a
 client-side safety check, independent of whatever the Verifier itself validates

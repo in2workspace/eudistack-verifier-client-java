@@ -68,7 +68,10 @@ public final class MachineCredential {
         return tenant;
     }
 
-    /** The credential's confirmation key, either a JWK-object JSON string or a {@code did:key}. */
+    /**
+     * The credential's confirmation key, per RFC 7800: either a JWK-object JSON string
+     * ({@code cnf.jwk}, §3.2) or a {@code did:key} DID URL ({@code cnf.kid}, §3.4).
+     */
     public String confirmationKey() {
         return confirmationKey;
     }
@@ -97,17 +100,21 @@ public final class MachineCredential {
 
     @SuppressWarnings("unchecked")
     private static String extractConfirmationKey(Object cnf) {
-        if (cnf instanceof String didKey) {
-            return didKey;
-        }
         if (cnf instanceof Map<?, ?> cnfMap) {
             Object jwk = ((Map<String, Object>) cnfMap).get("jwk");
             if (jwk != null) {
                 return JSONObjectUtils.toJSONString((Map<String, Object>) jwk);
             }
+            Object kid = ((Map<String, Object>) cnfMap).get("kid");
+            if (kid instanceof String kidString && !kidString.isBlank()) {
+                return kidString;
+            }
         }
         throw new InvalidConfigurationException(
-                "credentialJwt has no cnf claim (expected a did:key string or a {\"jwk\": {...}} object)");
+                "credentialJwt has no usable cnf claim (expected a {\"jwk\": {...}} object per "
+                        + "RFC 7800 §3.2, or a {\"kid\": \"did:...#...\"} object per RFC 7800 §3.4 "
+                        + "for a DID-based confirmation key — 'cnf' as a bare string is not valid "
+                        + "under RFC 7800, cnf is always a JSON object)");
     }
 
     @SuppressWarnings("unchecked")
