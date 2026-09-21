@@ -39,7 +39,7 @@ class VerifierM2MClientIntegrationTest {
     }
 
     @Test
-    void authenticatesAndReturnsTheAccessToken() throws Exception {
+    void authenticatesAndReturnsTheAccessToken() {
         wireMockServer.stubFor(
                 post(urlEqualTo("/oidc/token"))
                         .withHeader("Content-Type", equalTo("application/x-www-form-urlencoded"))
@@ -63,7 +63,7 @@ class VerifierM2MClientIntegrationTest {
     }
 
     @Test
-    void surfacesA4xxAsTokenRequestFailedException() throws Exception {
+    void surfacesA4xxAsTokenRequestFailedException() {
         wireMockServer.stubFor(
                 post(urlEqualTo("/oidc/token"))
                         .willReturn(
@@ -100,7 +100,7 @@ class VerifierM2MClientIntegrationTest {
         VerifierM2MClient.Builder builder =
                 VerifierM2MClient.builder()
                         .verifierUrl(wireMockServer.baseUrl())
-                        .privateKeyJwk(configuredKey.toJSONString())
+                        .privateKey(configuredKey.toJSONString())
                         .credentialJwt(credentialJwt);
 
         assertThatThrownBy(builder::build).isInstanceOf(CredentialKeyMismatchException.class);
@@ -122,7 +122,7 @@ class VerifierM2MClientIntegrationTest {
         VerifierM2MClient.Builder builder =
                 VerifierM2MClient.builder()
                         .verifierUrl(wireMockServer.baseUrl())
-                        .privateKeyJwk(privateKey.toJSONString())
+                        .privateKey(privateKey.toJSONString())
                         .credentialJwt(credentialJwt);
 
         assertThatThrownBy(builder::build)
@@ -130,7 +130,7 @@ class VerifierM2MClientIntegrationTest {
                 .hasMessageContaining("https");
     }
 
-    private VerifierM2MClient buildClientAgainstStub() throws Exception {
+    private VerifierM2MClient buildClientAgainstStub() {
         ECKey privateKey = generateKey();
         ECKey publicJwk = privateKey.toPublicJWK();
         Map<String, Object> cnf =
@@ -145,7 +145,7 @@ class VerifierM2MClientIntegrationTest {
 
         return VerifierM2MClient.builder()
                 .verifierUrl(wireMockServer.baseUrl())
-                .privateKeyJwk(privateKey.toJSONString())
+                .privateKey(privateKey.toJSONString())
                 .credentialJwt(credentialJwt)
                 .allowInsecureHttp() // WireMock serves plain HTTP in this test
                 .build();

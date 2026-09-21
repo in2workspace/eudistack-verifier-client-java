@@ -41,8 +41,9 @@ class VpJwtBuilderTest {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> vp = (Map<String, Object>) claims.getClaim("vp");
-        assertThat(vp.get("type")).isEqualTo(List.of("VerifiablePresentation"));
-        assertThat(vp.get("verifiableCredential")).isEqualTo(List.of(CREDENTIAL_JWT));
+        assertThat(vp)
+                .containsEntry("type", List.of("VerifiablePresentation"))
+                .containsEntry("verifiableCredential", List.of(CREDENTIAL_JWT));
     }
 
     @Test

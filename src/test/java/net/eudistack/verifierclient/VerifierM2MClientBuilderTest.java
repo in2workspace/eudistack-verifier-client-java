@@ -42,18 +42,18 @@ class VerifierM2MClientBuilderTest {
                         () ->
                                 VerifierM2MClient.builder()
                                         .verifierUrl("https://verifier.example.org")
-                                        .privateKeyJwkFile(keyFile)
+                                        .privateKeyFile(keyFile)
                                         .credentialJwtFile(credentialFile)
                                         .build())
                 .doesNotThrowAnyException();
     }
 
     @Test
-    void privateKeyJwkFileWrapsAMissingFileAsInvalidConfigurationException() {
+    void privateKeyFileWrapsAMissingFileAsInvalidConfigurationException() {
         Path missing = tempDir.resolve("does-not-exist.jwk.json");
         VerifierM2MClient.Builder builder = VerifierM2MClient.builder();
 
-        assertThatThrownBy(() -> builder.privateKeyJwkFile(missing))
+        assertThatThrownBy(() -> builder.privateKeyFile(missing))
                 .isInstanceOf(InvalidConfigurationException.class)
                 .hasCauseInstanceOf(IOException.class);
     }
