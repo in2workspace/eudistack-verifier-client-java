@@ -27,7 +27,7 @@ and needs to obtain an OAuth2 access token from a Verifier that trusts that cred
 
 ```groovy
 dependencies {
-    implementation 'com.eudistack:eudistack-verifier-client-java:<version>'
+    implementation 'net.eudistack:eudistack-verifier-client-java:<version>'
 }
 ```
 
@@ -35,7 +35,7 @@ dependencies {
 
 ```xml
 <dependency>
-    <groupId>com.eudistack</groupId>
+    <groupId>net.eudistack</groupId>
     <artifactId>eudistack-verifier-client-java</artifactId>
     <version>&lt;version&gt;</version>
 </dependency>
