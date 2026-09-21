@@ -97,15 +97,13 @@ class VerifierM2MClientIntegrationTest {
                                 "x", unrelatedPublicKey.getX().toString(),
                                 "y", unrelatedPublicKey.getY().toString()));
         String credentialJwt = CredentialFixtures.machineCredentialJwt(mismatchedCnf);
+        VerifierM2MClient.Builder builder =
+                VerifierM2MClient.builder()
+                        .verifierUrl(wireMockServer.baseUrl())
+                        .privateKeyJwk(configuredKey.toJSONString())
+                        .credentialJwt(credentialJwt);
 
-        assertThatThrownBy(
-                        () ->
-                                VerifierM2MClient.builder()
-                                        .verifierUrl(wireMockServer.baseUrl())
-                                        .privateKeyJwk(configuredKey.toJSONString())
-                                        .credentialJwt(credentialJwt)
-                                        .build())
-                .isInstanceOf(CredentialKeyMismatchException.class);
+        assertThatThrownBy(builder::build).isInstanceOf(CredentialKeyMismatchException.class);
     }
 
     @Test
@@ -121,14 +119,13 @@ class VerifierM2MClientIntegrationTest {
                                 "x", publicJwk.getX().toString(),
                                 "y", publicJwk.getY().toString()));
         String credentialJwt = CredentialFixtures.machineCredentialJwt(cnf);
+        VerifierM2MClient.Builder builder =
+                VerifierM2MClient.builder()
+                        .verifierUrl(wireMockServer.baseUrl())
+                        .privateKeyJwk(privateKey.toJSONString())
+                        .credentialJwt(credentialJwt);
 
-        assertThatThrownBy(
-                        () ->
-                                VerifierM2MClient.builder()
-                                        .verifierUrl(wireMockServer.baseUrl())
-                                        .privateKeyJwk(privateKey.toJSONString())
-                                        .credentialJwt(credentialJwt)
-                                        .build())
+        assertThatThrownBy(builder::build)
                 .isInstanceOf(InvalidConfigurationException.class)
                 .hasMessageContaining("https");
     }
