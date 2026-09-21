@@ -60,9 +60,10 @@ class CnfBindingValidatorTest {
                         + "\"y\":\"OOzX2baxZnRthbl0-4prn9K6s4uaQO3bYAijgNB4bM8\","
                         + "\"d\":\"ABI0VniQq83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq80\"}";
         String matchingDidKey = "did:key:zDnaekiFy89Lofk88Qrjorneke49pTLfEDxbMPSQjWeNBRtvD";
+        Map<String, Object> cnf = Map.of("kid", matchingDidKey + "#" + matchingDidKey.substring("did:key:".length()));
         ECKey privateKey = ECKey.parse(privateKeyJwk);
         MachineCredential credential =
-                MachineCredential.parse(CredentialFixtures.machineCredentialJwt(matchingDidKey));
+                MachineCredential.parse(CredentialFixtures.machineCredentialJwt(cnf));
 
         assertThatCode(() -> CnfBindingValidator.validate(privateKey, credential)).doesNotThrowAnyException();
     }
@@ -71,8 +72,10 @@ class CnfBindingValidatorTest {
     void failsFastWhenPrivateKeyDoesNotMatchADidKeyCnf() throws Exception {
         ECKey configuredKey = new ECKeyGenerator(Curve.P_256).generate();
         String unrelatedDidKey = "did:key:zDnaekiFy89Lofk88Qrjorneke49pTLfEDxbMPSQjWeNBRtvD";
+        Map<String, Object> cnf =
+                Map.of("kid", unrelatedDidKey + "#" + unrelatedDidKey.substring("did:key:".length()));
         MachineCredential credential =
-                MachineCredential.parse(CredentialFixtures.machineCredentialJwt(unrelatedDidKey));
+                MachineCredential.parse(CredentialFixtures.machineCredentialJwt(cnf));
 
         assertThatThrownBy(() -> CnfBindingValidator.validate(configuredKey, credential))
                 .isInstanceOf(CredentialKeyMismatchException.class);
