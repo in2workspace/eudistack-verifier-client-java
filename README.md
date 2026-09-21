@@ -1,5 +1,10 @@
 # EUDIStack Verifier Client (Java)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=in2workspace_eudistack-verifier-client-java&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=in2workspace_eudistack-verifier-client-java)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=in2workspace_eudistack-verifier-client-java&metric=coverage)](https://sonarcloud.io/summary/new_code?id=in2workspace_eudistack-verifier-client-java)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=in2workspace_eudistack-verifier-client-java&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=in2workspace_eudistack-verifier-client-java)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=in2workspace_eudistack-verifier-client-java&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=in2workspace_eudistack-verifier-client-java)
+
 A small, dependency-light Java SDK for machine-to-machine (M2M) authentication against
 OID4VP-style Verifiers, using the `client_credentials` grant with `private_key_jwt`
 (RFC 7523) and a self-signed Verifiable Presentation JWT as proof of possession.
