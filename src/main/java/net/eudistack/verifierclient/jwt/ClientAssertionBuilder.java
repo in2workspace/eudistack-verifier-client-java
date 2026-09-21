@@ -44,6 +44,8 @@ public final class ClientAssertionBuilder {
                         .issuer(clientId)
                         .subject(clientId)
                         .audience(audience)
+                        // Nimbus's JWTClaimsSet.Builder only accepts java.util.Date — this is the
+                        // one unavoidable conversion point at that API boundary, not a choice.
                         .issueTime(Date.from(now))
                         .expirationTime(Date.from(Instant.ofEpochSecond(exp)))
                         .jwtID(UUID.randomUUID().toString())

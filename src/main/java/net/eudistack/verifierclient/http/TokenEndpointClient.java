@@ -92,7 +92,7 @@ public final class TokenEndpointClient {
     private static long parseLongOrZero(Object value) {
         try {
             return Long.parseLong(String.valueOf(value));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return 0L;
         }
     }

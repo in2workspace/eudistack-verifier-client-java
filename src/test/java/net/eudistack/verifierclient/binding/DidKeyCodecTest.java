@@ -29,8 +29,8 @@ class DidKeyCodecTest {
         ECKey decoded = DidKeyCodec.decodeP256PublicKey(KNOWN_DID_KEY);
 
         assertThat(decoded.getCurve()).isEqualTo(Curve.P_256);
-        assertThat(decoded.getX().toString()).isEqualTo(EXPECTED_X);
-        assertThat(decoded.getY().toString()).isEqualTo(EXPECTED_Y);
+        assertThat(decoded.getX()).hasToString(EXPECTED_X);
+        assertThat(decoded.getY()).hasToString(EXPECTED_Y);
     }
 
     @Test
@@ -39,8 +39,8 @@ class DidKeyCodecTest {
 
         ECKey decoded = DidKeyCodec.decodeP256PublicKey(didUrl);
 
-        assertThat(decoded.getX().toString()).isEqualTo(EXPECTED_X);
-        assertThat(decoded.getY().toString()).isEqualTo(EXPECTED_Y);
+        assertThat(decoded.getX()).hasToString(EXPECTED_X);
+        assertThat(decoded.getY()).hasToString(EXPECTED_Y);
     }
 
     @Test
