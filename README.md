@@ -78,13 +78,17 @@ AccessToken token = client.authenticate();
 
 ## Configuration reference
 
+`verifier.url` is the remote service you're connecting to. Everything under
+`verifier.client.*` is **yours** — the private key and credential you authenticate with, not
+anything belonging to the Verifier.
+
 | Key | Required | Meaning |
 |---|---|---|
 | `verifier.url` | yes | The Verifier's base URL, e.g. `https://verifier.example.org` |
-| `verifier.private-key-jwk` | one of these two | Private key, inline JWK JSON (P-256) |
-| `verifier.private-key-jwk-path` | | Path to a file containing the JWK JSON (relative to the config file) |
-| `verifier.credential-jwt` | one of these two | Machine credential, inline compact JWT |
-| `verifier.credential-jwt-path` | | Path to a file containing the credential JWT (relative to the config file) |
+| `verifier.client.private-key-jwk` | one of these two | Your private key, inline JWK JSON (P-256) |
+| `verifier.client.private-key-jwk-path` | | Path to a file containing the JWK JSON (relative to the config file) |
+| `verifier.client.credential-jwt` | one of these two | Your machine credential, inline compact JWT |
+| `verifier.client.credential-jwt-path` | | Path to a file containing the credential JWT (relative to the config file) |
 
 Set exactly one of the inline/path variants for the key, and exactly one for the credential.
 
@@ -92,8 +96,8 @@ Set exactly one of the inline/path variants for the key, and exactly one for the
 
 ```properties
 verifier.url=https://verifier.example.org
-verifier.private-key-jwk-path=key.jwk.json
-verifier.credential-jwt-path=credential.jwt
+verifier.client.private-key-jwk-path=key.jwk.json
+verifier.client.credential-jwt-path=credential.jwt
 ```
 
 ### `.yaml`
@@ -101,8 +105,9 @@ verifier.credential-jwt-path=credential.jwt
 ```yaml
 verifier:
   url: https://verifier.example.org
-  private-key-jwk-path: key.jwk.json
-  credential-jwt-path: credential.jwt
+  client:
+    private-key-jwk-path: key.jwk.json
+    credential-jwt-path: credential.jwt
 ```
 
 > YAML support requires `org.yaml:snakeyaml` on your classpath — it's an **optional**

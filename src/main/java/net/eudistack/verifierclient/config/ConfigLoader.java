@@ -12,14 +12,16 @@ import java.util.Properties;
  * Loads a {@link VerifierM2MClientConfig} from a {@code .yaml}/{@code .yml} or
  * {@code .properties} file.
  *
- * <p>Recognised keys (both formats use the same dotted names):
+ * <p>Recognised keys (both formats use the same dotted names). {@code verifier.url} is the
+ * remote service you're connecting to; everything under {@code verifier.client.*} is your
+ * own — the private key and credential you're authenticating with, not the Verifier's:
  *
  * <ul>
  *   <li>{@code verifier.url} — the Verifier's base URL
- *   <li>{@code verifier.private-key-jwk} — the private key, as an inline JWK JSON string
- *   <li>{@code verifier.private-key-jwk-path} — path to a file containing the JWK JSON
- *   <li>{@code verifier.credential-jwt} — the machine credential, as an inline JWT string
- *   <li>{@code verifier.credential-jwt-path} — path to a file containing the credential JWT
+ *   <li>{@code verifier.client.private-key-jwk} — your private key, as an inline JWK JSON string
+ *   <li>{@code verifier.client.private-key-jwk-path} — path to a file containing the JWK JSON
+ *   <li>{@code verifier.client.credential-jwt} — your machine credential, as an inline JWT string
+ *   <li>{@code verifier.client.credential-jwt-path} — path to a file containing the credential JWT
  * </ul>
  *
  * Exactly one of the inline/path variants must be set for the key and for the credential.
@@ -102,10 +104,16 @@ public final class ConfigLoader {
         String verifierUrl = requireString(raw, "verifier.url", source);
         String privateKeyJwk =
                 resolveInlineOrPath(
-                        raw, "verifier.private-key-jwk", "verifier.private-key-jwk-path", source);
+                        raw,
+                        "verifier.client.private-key-jwk",
+                        "verifier.client.private-key-jwk-path",
+                        source);
         String credentialJwt =
                 resolveInlineOrPath(
-                        raw, "verifier.credential-jwt", "verifier.credential-jwt-path", source);
+                        raw,
+                        "verifier.client.credential-jwt",
+                        "verifier.client.credential-jwt-path",
+                        source);
         return new VerifierM2MClientConfig(verifierUrl, privateKeyJwk, credentialJwt);
     }
 

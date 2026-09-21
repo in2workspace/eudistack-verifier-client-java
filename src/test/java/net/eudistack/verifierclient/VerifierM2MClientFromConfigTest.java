@@ -79,10 +79,10 @@ class VerifierM2MClientFromConfigTest {
         Files.writeString(
                 file,
                 "verifier.url=https://verifier.example.org\n"
-                        + "verifier.private-key-jwk="
+                        + "verifier.client.private-key-jwk="
                         + privateKey.toJSONString()
                         + "\n"
-                        + "verifier.credential-jwt="
+                        + "verifier.client.credential-jwt="
                         + credentialJwt
                         + "\n");
         return file;

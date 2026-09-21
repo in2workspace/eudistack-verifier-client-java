@@ -21,8 +21,8 @@ class ConfigLoaderTest {
                 file,
                 """
                 verifier.url=https://verifier.example.org
-                verifier.private-key-jwk={"kty":"EC"}
-                verifier.credential-jwt=header.payload.signature
+                verifier.client.private-key-jwk={"kty":"EC"}
+                verifier.client.credential-jwt=header.payload.signature
                 """);
 
         VerifierM2MClientConfig config = ConfigLoader.load(file);
@@ -44,8 +44,8 @@ class ConfigLoaderTest {
                 file,
                 """
                 verifier.url=https://verifier.example.org
-                verifier.private-key-jwk-path=key.jwk.json
-                verifier.credential-jwt-path=credential.jwt
+                verifier.client.private-key-jwk-path=key.jwk.json
+                verifier.client.credential-jwt-path=credential.jwt
                 """);
 
         VerifierM2MClientConfig config = ConfigLoader.load(file);
@@ -62,8 +62,9 @@ class ConfigLoaderTest {
                 """
                 verifier:
                   url: https://verifier.example.org
-                  private-key-jwk: '{"kty":"EC"}'
-                  credential-jwt: header.payload.signature
+                  client:
+                    private-key-jwk: '{"kty":"EC"}'
+                    credential-jwt: header.payload.signature
                 """);
 
         VerifierM2MClientConfig config = ConfigLoader.load(file);
@@ -80,9 +81,9 @@ class ConfigLoaderTest {
                 file,
                 """
                 verifier.url=https://verifier.example.org
-                verifier.private-key-jwk={"kty":"EC"}
-                verifier.private-key-jwk-path=key.jwk.json
-                verifier.credential-jwt=header.payload.signature
+                verifier.client.private-key-jwk={"kty":"EC"}
+                verifier.client.private-key-jwk-path=key.jwk.json
+                verifier.client.credential-jwt=header.payload.signature
                 """);
 
         assertThatThrownBy(() -> ConfigLoader.load(file))
