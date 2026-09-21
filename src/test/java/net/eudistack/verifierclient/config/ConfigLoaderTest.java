@@ -21,14 +21,14 @@ class ConfigLoaderTest {
                 file,
                 """
                 verifier.url=https://verifier.example.org
-                verifier.client.private-key-jwk={"kty":"EC"}
+                verifier.client.private-key={"kty":"EC"}
                 verifier.client.credential-jwt=header.payload.signature
                 """);
 
         VerifierM2MClientConfig config = ConfigLoader.load(file);
 
         assertThat(config.verifierUrl()).isEqualTo("https://verifier.example.org");
-        assertThat(config.privateKeyJwk()).isEqualTo("{\"kty\":\"EC\"}");
+        assertThat(config.privateKey()).isEqualTo("{\"kty\":\"EC\"}");
         assertThat(config.credentialJwt()).isEqualTo("header.payload.signature");
     }
 
@@ -44,13 +44,13 @@ class ConfigLoaderTest {
                 file,
                 """
                 verifier.url=https://verifier.example.org
-                verifier.client.private-key-jwk-path=key.jwk.json
+                verifier.client.private-key-path=key.jwk.json
                 verifier.client.credential-jwt-path=credential.jwt
                 """);
 
         VerifierM2MClientConfig config = ConfigLoader.load(file);
 
-        assertThat(config.privateKeyJwk()).isEqualTo("{\"kty\":\"EC\"}");
+        assertThat(config.privateKey()).isEqualTo("{\"kty\":\"EC\"}");
         assertThat(config.credentialJwt()).isEqualTo("header.payload.signature");
     }
 
@@ -63,15 +63,35 @@ class ConfigLoaderTest {
                 verifier:
                   url: https://verifier.example.org
                   client:
-                    private-key-jwk: '{"kty":"EC"}'
+                    private-key: '{"kty":"EC"}'
                     credential-jwt: header.payload.signature
                 """);
 
         VerifierM2MClientConfig config = ConfigLoader.load(file);
 
         assertThat(config.verifierUrl()).isEqualTo("https://verifier.example.org");
-        assertThat(config.privateKeyJwk()).isEqualTo("{\"kty\":\"EC\"}");
+        assertThat(config.privateKey()).isEqualTo("{\"kty\":\"EC\"}");
         assertThat(config.credentialJwt()).isEqualTo("header.payload.signature");
+    }
+
+    @Test
+    void rejectsAnUnquotedHexScalarInYamlInsteadOfSilentlyCorruptingIt() throws IOException {
+        // Unquoted, this scalar parses as a YAML BigInteger, not a String — decimal
+        // stringification of that would silently produce a completely different key.
+        Path file = tempDir.resolve("verifier-client.yaml");
+        Files.writeString(
+                file,
+                """
+                verifier:
+                  url: https://verifier.example.org
+                  client:
+                    private-key: 0xabcd
+                    credential-jwt: header.payload.signature
+                """);
+
+        assertThatThrownBy(() -> ConfigLoader.load(file))
+                .isInstanceOf(InvalidConfigurationException.class)
+                .hasMessageContaining("quote");
     }
 
     @Test
@@ -81,8 +101,8 @@ class ConfigLoaderTest {
                 file,
                 """
                 verifier.url=https://verifier.example.org
-                verifier.client.private-key-jwk={"kty":"EC"}
-                verifier.client.private-key-jwk-path=key.jwk.json
+                verifier.client.private-key={"kty":"EC"}
+                verifier.client.private-key-path=key.jwk.json
                 verifier.client.credential-jwt=header.payload.signature
                 """);
 

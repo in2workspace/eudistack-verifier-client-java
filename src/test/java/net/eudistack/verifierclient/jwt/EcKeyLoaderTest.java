@@ -62,8 +62,7 @@ class EcKeyLoaderTest {
 
     @Test
     void loadsAKeyFromARawHexScalarWithA0xPrefix() {
-        // Same d/x/y test vector used by P256ScalarMultiplierTest, DidKeyCodecTest and
-        // CnfBindingValidatorTest — independently computed (Python, cryptography.hazmat).
+        // Independently computed (Python, cryptography.hazmat), not via this codec.
         String hexScalar = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd";
 
         ECKey loaded = EcKeyLoader.loadPrivateKey(hexScalar);
@@ -96,7 +95,7 @@ class EcKeyLoaderTest {
 
     @Test
     void rejectsAHexScalarLongerThan32Bytes() {
-        String tooLong = "ab".repeat(33); // 66 hex digits = 33 bytes
+        String tooLong = "ab".repeat(33);
         assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey(tooLong))
                 .isInstanceOf(InvalidConfigurationException.class)
                 .hasMessageContaining("P-256 private scalar");
@@ -105,6 +104,12 @@ class EcKeyLoaderTest {
     @Test
     void rejectsAStringThatIsNeitherJwkNorValidHex() {
         assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey("not-json-and-not-hex-either"))
+                .isInstanceOf(InvalidConfigurationException.class);
+    }
+
+    @Test
+    void rejectsAZeroScalarAsItProducesThePointAtInfinity() {
+        assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey("0x0"))
                 .isInstanceOf(InvalidConfigurationException.class);
     }
 }

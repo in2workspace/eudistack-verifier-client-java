@@ -18,8 +18,9 @@ import java.util.Properties;
  *
  * <ul>
  *   <li>{@code verifier.url} — the Verifier's base URL
- *   <li>{@code verifier.client.private-key-jwk} — your private key, as an inline JWK JSON string
- *   <li>{@code verifier.client.private-key-jwk-path} — path to a file containing the JWK JSON
+ *   <li>{@code verifier.client.private-key} — your private key, inline (JWK JSON or a raw hex
+ *       scalar — see {@link net.eudistack.verifierclient.jwt.EcKeyLoader})
+ *   <li>{@code verifier.client.private-key-path} — path to a file containing the private key
  *   <li>{@code verifier.client.credential-jwt} — your machine credential, as an inline JWT string
  *   <li>{@code verifier.client.credential-jwt-path} — path to a file containing the credential JWT
  * </ul>
@@ -102,11 +103,11 @@ public final class ConfigLoader {
 
     private static VerifierM2MClientConfig toConfig(Map<String, Object> raw, Path source) {
         String verifierUrl = requireString(raw, "verifier.url", source);
-        String privateKeyJwk =
+        String privateKey =
                 resolveInlineOrPath(
                         raw,
-                        "verifier.client.private-key-jwk",
-                        "verifier.client.private-key-jwk-path",
+                        "verifier.client.private-key",
+                        "verifier.client.private-key-path",
                         source);
         String credentialJwt =
                 resolveInlineOrPath(
@@ -114,7 +115,7 @@ public final class ConfigLoader {
                         "verifier.client.credential-jwt",
                         "verifier.client.credential-jwt-path",
                         source);
-        return new VerifierM2MClientConfig(verifierUrl, privateKeyJwk, credentialJwt);
+        return new VerifierM2MClientConfig(verifierUrl, privateKey, credentialJwt);
     }
 
     private static String resolveInlineOrPath(
@@ -132,7 +133,7 @@ public final class ConfigLoader {
                             + "' — set only one");
         }
         if (inline != null) {
-            return String.valueOf(inline);
+            return requireYamlString(inline, inlineKey, source);
         }
         if (filePath != null) {
             Path resolved = resolveWithinConfigDirectory(source, String.valueOf(filePath), pathKey);
@@ -167,6 +168,28 @@ public final class ConfigLoader {
                     "'" + pathKey + "' must not escape the config file's directory: " + rawPath);
         }
         return resolved;
+    }
+
+    /**
+     * SnakeYAML's implicit resolver parses an unquoted scalar that looks numeric — including
+     * a hex private key scalar like {@code 0xb8c0...} — as a {@code BigInteger}, not a
+     * {@code String}; {@code String.valueOf} on that would silently produce the decimal
+     * digits instead of the original hex, loading a completely different, valid-looking key
+     * with no error. Rejecting non-string YAML values here forces the config author to quote
+     * ambiguous values instead of the SDK guessing wrong.
+     */
+    private static String requireYamlString(Object value, String key, Path source) {
+        if (!(value instanceof String str)) {
+            throw new InvalidConfigurationException(
+                    "'"
+                            + key
+                            + "' in "
+                            + source
+                            + " was parsed as "
+                            + value.getClass().getSimpleName()
+                            + ", not a string — quote the value (e.g. '0xabc...') if it looks numeric");
+        }
+        return str;
     }
 
     private static String requireString(Map<String, Object> raw, String key, Path source) {

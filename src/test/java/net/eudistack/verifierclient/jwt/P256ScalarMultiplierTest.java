@@ -1,14 +1,17 @@
 package net.eudistack.verifierclient.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
 
 class P256ScalarMultiplierTest {
 
-    // Independently computed (Python, cryptography.hazmat) — same d used across
-    // DidKeyCodecTest / CnfBindingValidatorTest for the matching x/y test vector.
+    private static final BigInteger CURVE_ORDER =
+            new BigInteger("ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551", 16);
+
+    // Independently computed (Python, cryptography.hazmat), not via this codec.
     private static final BigInteger D =
             new BigInteger("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd", 16);
     private static final BigInteger EXPECTED_X =
@@ -50,5 +53,38 @@ class P256ScalarMultiplierTest {
             BigInteger rhs = x.modPow(BigInteger.valueOf(3), p).add(a.multiply(x)).add(b).mod(p);
             assertThat(lhs).as("point for d=%s is on the curve", d).isEqualTo(rhs);
         }
+    }
+
+    @Test
+    void rejectsAZeroScalar() {
+        assertThatThrownBy(() -> P256ScalarMultiplier.derivePublicPoint(BigInteger.ZERO))
+                .isInstanceOf(ArithmeticException.class);
+    }
+
+    @Test
+    void rejectsANegativeScalar() {
+        assertThatThrownBy(() -> P256ScalarMultiplier.derivePublicPoint(BigInteger.valueOf(-1)))
+                .isInstanceOf(ArithmeticException.class);
+    }
+
+    @Test
+    void rejectsAScalarEqualToTheCurveOrder() {
+        assertThatThrownBy(() -> P256ScalarMultiplier.derivePublicPoint(CURVE_ORDER))
+                .isInstanceOf(ArithmeticException.class);
+    }
+
+    @Test
+    void rejectsAScalarGreaterThanTheCurveOrder() {
+        BigInteger beyondOrder = CURVE_ORDER.add(BigInteger.ONE);
+
+        assertThatThrownBy(() -> P256ScalarMultiplier.derivePublicPoint(beyondOrder))
+                .isInstanceOf(ArithmeticException.class);
+    }
+
+    @Test
+    void acceptsTheLargestValidScalar() {
+        BigInteger[] point = P256ScalarMultiplier.derivePublicPoint(CURVE_ORDER.subtract(BigInteger.ONE));
+
+        assertThat(point).isNotNull();
     }
 }

@@ -100,7 +100,7 @@ class VerifierM2MClientIntegrationTest {
         VerifierM2MClient.Builder builder =
                 VerifierM2MClient.builder()
                         .verifierUrl(wireMockServer.baseUrl())
-                        .privateKeyJwk(configuredKey.toJSONString())
+                        .privateKey(configuredKey.toJSONString())
                         .credentialJwt(credentialJwt);
 
         assertThatThrownBy(builder::build).isInstanceOf(CredentialKeyMismatchException.class);
@@ -122,7 +122,7 @@ class VerifierM2MClientIntegrationTest {
         VerifierM2MClient.Builder builder =
                 VerifierM2MClient.builder()
                         .verifierUrl(wireMockServer.baseUrl())
-                        .privateKeyJwk(privateKey.toJSONString())
+                        .privateKey(privateKey.toJSONString())
                         .credentialJwt(credentialJwt);
 
         assertThatThrownBy(builder::build)
@@ -145,7 +145,7 @@ class VerifierM2MClientIntegrationTest {
 
         return VerifierM2MClient.builder()
                 .verifierUrl(wireMockServer.baseUrl())
-                .privateKeyJwk(privateKey.toJSONString())
+                .privateKey(privateKey.toJSONString())
                 .credentialJwt(credentialJwt)
                 .allowInsecureHttp() // WireMock serves plain HTTP in this test
                 .build();

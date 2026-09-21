@@ -15,7 +15,7 @@ import java.text.ParseException;
  */
 public final class EcKeyLoader {
 
-    private static final int P256_SCALAR_MAX_HEX_LENGTH = 64; // 32 bytes, zero-padding optional
+    private static final int P256_SCALAR_MAX_HEX_LENGTH = 64;
 
     private EcKeyLoader() {}
 
@@ -25,18 +25,18 @@ public final class EcKeyLoader {
      */
     public static ECKey loadPrivateKey(String privateKey) {
         if (privateKey == null || privateKey.isBlank()) {
-            throw new InvalidConfigurationException("privateKeyJwk must not be blank");
+            throw new InvalidConfigurationException("privateKey must not be blank");
         }
         String trimmed = privateKey.trim();
         ECKey ecKey = trimmed.startsWith("{") ? parseJwk(trimmed) : parseHexScalar(trimmed);
 
         if (!Curve.P_256.equals(ecKey.getCurve())) {
             throw new InvalidConfigurationException(
-                    "privateKeyJwk must use curve P-256, found: " + ecKey.getCurve());
+                    "privateKey must use curve P-256, found: " + ecKey.getCurve());
         }
         if (!ecKey.isPrivate()) {
             throw new InvalidConfigurationException(
-                    "privateKeyJwk must contain the private component ('d')");
+                    "privateKey must contain the private component ('d')");
         }
         return ecKey;
     }
@@ -45,7 +45,7 @@ public final class EcKeyLoader {
         try {
             return ECKey.parse(json);
         } catch (ParseException e) {
-            throw new InvalidConfigurationException("privateKeyJwk is not a valid JWK", e);
+            throw new InvalidConfigurationException("privateKey is not a valid JWK", e);
         }
     }
 
@@ -57,12 +57,16 @@ public final class EcKeyLoader {
         if (unprefixed.isEmpty()
                 || unprefixed.length() > P256_SCALAR_MAX_HEX_LENGTH
                 || !unprefixed.matches("(?i)[0-9a-f]+")) {
+            // Never echo the candidate value here — it may be the private key itself, or a
+            // file's raw content (e.g. a whitespace/BOM-mangled key), and this message is
+            // exactly the kind of text applications log at ERROR by default.
             throw new InvalidConfigurationException(
-                    "privateKeyJwk is neither a JWK JSON object nor a P-256 private scalar "
+                    "privateKey is neither a JWK JSON object nor a P-256 private scalar "
                             + "(expected up to "
                             + P256_SCALAR_MAX_HEX_LENGTH
-                            + " hex digits): "
-                            + hex);
+                            + " hex digits, got "
+                            + unprefixed.length()
+                            + " characters)");
         }
 
         BigInteger d = new BigInteger(unprefixed, 16);
@@ -71,7 +75,7 @@ public final class EcKeyLoader {
             point = P256ScalarMultiplier.derivePublicPoint(d);
         } catch (ArithmeticException e) {
             throw new InvalidConfigurationException(
-                    "privateKeyJwk scalar does not produce a valid P-256 key point", e);
+                    "privateKey scalar does not produce a valid P-256 key point", e);
         }
 
         return new ECKey.Builder(

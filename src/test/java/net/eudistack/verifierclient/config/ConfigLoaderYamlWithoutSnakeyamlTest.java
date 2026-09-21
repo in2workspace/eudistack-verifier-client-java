@@ -33,7 +33,7 @@ class ConfigLoaderYamlWithoutSnakeyamlTest {
                 """
                 verifier:
                   url: https://verifier.example.org
-                  private-key-jwk: '{"kty":"EC"}'
+                  private-key: '{"kty":"EC"}'
                   credential-jwt: header.payload.signature
                 """);
 

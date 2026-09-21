@@ -12,6 +12,13 @@ import java.math.BigInteger;
  * <p>Some machine credential issuers hand out the mandatee's private key as this raw scalar
  * (hex-encoded) rather than as a JWK, so {@link EcKeyLoader} uses this to build the JWK the
  * rest of the SDK needs.
+ *
+ * <p><b>Not constant-time.</b> The scalar multiplication below branches on individual bits
+ * of {@code d} and its {@link BigInteger} operand sizes vary with intermediate values,
+ * neither of which the JVM makes any timing guarantees about. This is safe for its one call
+ * site — deriving a public key once at client construction, with no network-observable
+ * oracle — but this class must never be called repeatedly with different secrets on a
+ * request path.
  */
 final class P256ScalarMultiplier {
 
@@ -19,6 +26,8 @@ final class P256ScalarMultiplier {
     private static final BigInteger P =
             new BigInteger("ffffffff00000001000000000000000000000000ffffffffffffffffffffffff", 16);
     private static final BigInteger A = P.subtract(BigInteger.valueOf(3));
+    private static final BigInteger B =
+            new BigInteger("5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b", 16);
     private static final BigInteger GX =
             new BigInteger("6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296", 16);
     private static final BigInteger GY =
@@ -28,10 +37,31 @@ final class P256ScalarMultiplier {
 
     private P256ScalarMultiplier() {}
 
-    /** Derives {@code (x, y)} for {@code d·G}. {@code d} must be in {@code [1, order-1]}. */
+    /**
+     * Derives {@code (x, y)} for {@code d·G}.
+     *
+     * @throws ArithmeticException if {@code d} is outside {@code [1, order-1]} (SP 800-56A
+     *     §5.6.1.2), or the resulting point is not on the curve — this method never silently
+     *     reduces an out-of-range scalar, since a caller (e.g. {@link EcKeyLoader}) may store
+     *     the unreduced {@code d} in the resulting key, which would otherwise produce a JWK
+     *     whose private scalar and public point don't correspond to each other.
+     */
     static BigInteger[] derivePublicPoint(BigInteger d) {
-        BigInteger[] jacobian = multiply(d.mod(ORDER), new BigInteger[] {GX, GY, BigInteger.ONE});
-        return toAffine(jacobian);
+        if (d.signum() <= 0 || d.compareTo(ORDER) >= 0) {
+            throw new ArithmeticException("Private scalar is not in the valid range [1, order-1]");
+        }
+        BigInteger[] jacobian = multiply(d, new BigInteger[] {GX, GY, BigInteger.ONE});
+        BigInteger[] affine = toAffine(jacobian);
+        if (!isOnCurve(affine[0], affine[1])) {
+            throw new ArithmeticException("Derived point is not on the P-256 curve");
+        }
+        return affine;
+    }
+
+    private static boolean isOnCurve(BigInteger x, BigInteger y) {
+        BigInteger lhs = y.modPow(BigInteger.TWO, P);
+        BigInteger rhs = x.modPow(BigInteger.valueOf(3), P).add(A.multiply(x)).add(B).mod(P);
+        return lhs.equals(rhs);
     }
 
     // Jacobian double-and-add: (X, Y, Z) represents affine (X/Z^2, Y/Z^3), avoiding a modular

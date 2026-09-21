@@ -57,7 +57,7 @@ there's nothing else to keep in sync.
 ```java
 VerifierM2MClient client = VerifierM2MClient.builder()
     .verifierUrl("https://verifier.example.org")
-    .privateKeyJwk(privateKey)             // JWK JSON or a raw hex scalar — see below
+    .privateKey(privateKey)             // JWK JSON or a raw hex scalar — see below
     .credentialJwt(machineCredentialJwt)   // or .credentialJwtFile(Path.of("credential.jwt"))
     .build();
 
@@ -85,8 +85,8 @@ anything belonging to the Verifier.
 | Key | Required | Meaning |
 |---|---|---|
 | `verifier.url` | yes | The Verifier's base URL, e.g. `https://verifier.example.org` |
-| `verifier.client.private-key-jwk` | one of these two | Your private key, inline — see accepted formats below |
-| `verifier.client.private-key-jwk-path` | | Path to a file containing the private key (relative to the config file) |
+| `verifier.client.private-key` | one of these two | Your private key, inline — see accepted formats below |
+| `verifier.client.private-key-path` | | Path to a file containing the private key (relative to the config file) |
 | `verifier.client.credential-jwt` | one of these two | Your machine credential, inline compact JWT |
 | `verifier.client.credential-jwt-path` | | Path to a file containing the credential JWT (relative to the config file) |
 
@@ -103,11 +103,17 @@ Both the inline value and the file content accept either:
   the public `(x, y)` coordinates are derived from it automatically, with no extra step on
   your side.
 
+  **If you set this inline in a `.yaml` file, quote it**
+  (`verifier.client.private-key: '0xb8c0...'`). An unquoted value that looks numeric is
+  parsed by YAML as a number, not a string — this SDK rejects that with a clear error rather
+  than silently loading the wrong key, but quoting avoids the error entirely. `.properties`
+  files and the programmatic builder are unaffected.
+
 ### `.properties`
 
 ```properties
 verifier.url=https://verifier.example.org
-verifier.client.private-key-jwk-path=key.jwk.json
+verifier.client.private-key-path=key.jwk.json
 verifier.client.credential-jwt-path=credential.jwt
 ```
 
@@ -117,7 +123,7 @@ verifier.client.credential-jwt-path=credential.jwt
 verifier:
   url: https://verifier.example.org
   client:
-    private-key-jwk-path: key.jwk.json
+    private-key-path: key.jwk.json
     credential-jwt-path: credential.jwt
 ```
 

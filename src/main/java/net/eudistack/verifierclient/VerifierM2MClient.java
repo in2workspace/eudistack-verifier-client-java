@@ -25,7 +25,7 @@ import java.nio.file.Path;
  * <pre>{@code
  * VerifierM2MClient client = VerifierM2MClient.builder()
  *     .verifierUrl("https://verifier.example.org")
- *     .privateKeyJwk(privateKeyJwkJson)
+ *     .privateKey(privateKey)
  *     .credentialJwt(machineCredentialJwt)
  *     .build();
  *
@@ -63,7 +63,7 @@ public interface VerifierM2MClient {
     }
 
     private static VerifierM2MClient fromConfig(VerifierM2MClientConfig config, boolean allowInsecureHttp) {
-        var privateKey = EcKeyLoader.loadPrivateKey(config.privateKeyJwk());
+        var privateKey = EcKeyLoader.loadPrivateKey(config.privateKey());
         var credential = MachineCredential.parse(config.credentialJwt());
         CnfBindingValidator.validate(privateKey, credential);
         return new VerifierM2MClientImpl(config.verifierUrl(), privateKey, credential, allowInsecureHttp);
@@ -73,7 +73,7 @@ public interface VerifierM2MClient {
     final class Builder {
 
         private String verifierUrl;
-        private String privateKeyJwk;
+        private String privateKey;
         private String credentialJwt;
         private boolean allowInsecureHttp = false;
 
@@ -84,13 +84,17 @@ public interface VerifierM2MClient {
             return this;
         }
 
-        public Builder privateKeyJwk(String privateKeyJwkJson) {
-            this.privateKeyJwk = privateKeyJwkJson;
+        /**
+         * The private key, as either a JWK JSON object or a raw hex-encoded P-256 scalar —
+         * see {@link net.eudistack.verifierclient.jwt.EcKeyLoader}.
+         */
+        public Builder privateKey(String privateKey) {
+            this.privateKey = privateKey;
             return this;
         }
 
-        public Builder privateKeyJwkFile(Path path) {
-            this.privateKeyJwk = readFile(path, "privateKeyJwkFile");
+        public Builder privateKeyFile(Path path) {
+            this.privateKey = readFile(path, "privateKeyFile");
             return this;
         }
 
@@ -124,7 +128,7 @@ public interface VerifierM2MClient {
          * @throws CredentialKeyMismatchException if the private key does not match {@code cnf}
          */
         public VerifierM2MClient build() {
-            var config = new VerifierM2MClientConfig(verifierUrl, privateKeyJwk, credentialJwt);
+            var config = new VerifierM2MClientConfig(verifierUrl, privateKey, credentialJwt);
             return fromConfig(config, allowInsecureHttp);
         }
 
