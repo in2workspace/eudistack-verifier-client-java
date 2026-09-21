@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import net.eudistack.verifierclient.credential.CredentialFixtures;
 import net.eudistack.verifierclient.exception.CredentialKeyMismatchException;
+import net.eudistack.verifierclient.exception.InvalidConfigurationException;
 import net.eudistack.verifierclient.exception.TokenRequestFailedException;
 import net.eudistack.verifierclient.model.AccessToken;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -107,6 +108,31 @@ class VerifierM2MClientIntegrationTest {
                 .isInstanceOf(CredentialKeyMismatchException.class);
     }
 
+    @Test
+    void refusesPlainHttpVerifierUrlByDefault() {
+        ECKey privateKey = generateKey();
+        ECKey publicJwk = privateKey.toPublicJWK();
+        Map<String, Object> cnf =
+                Map.of(
+                        "jwk",
+                        Map.of(
+                                "kty", "EC",
+                                "crv", "P-256",
+                                "x", publicJwk.getX().toString(),
+                                "y", publicJwk.getY().toString()));
+        String credentialJwt = CredentialFixtures.machineCredentialJwt(cnf);
+
+        assertThatThrownBy(
+                        () ->
+                                VerifierM2MClient.builder()
+                                        .verifierUrl(wireMockServer.baseUrl())
+                                        .privateKeyJwk(privateKey.toJSONString())
+                                        .credentialJwt(credentialJwt)
+                                        .build())
+                .isInstanceOf(InvalidConfigurationException.class)
+                .hasMessageContaining("https");
+    }
+
     private VerifierM2MClient buildClientAgainstStub() throws Exception {
         ECKey privateKey = generateKey();
         ECKey publicJwk = privateKey.toPublicJWK();
@@ -124,6 +150,7 @@ class VerifierM2MClientIntegrationTest {
                 .verifierUrl(wireMockServer.baseUrl())
                 .privateKeyJwk(privateKey.toJSONString())
                 .credentialJwt(credentialJwt)
+                .allowInsecureHttp() // WireMock serves plain HTTP in this test
                 .build();
     }
 
