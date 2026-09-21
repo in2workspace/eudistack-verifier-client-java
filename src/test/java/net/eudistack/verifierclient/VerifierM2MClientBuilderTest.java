@@ -51,8 +51,9 @@ class VerifierM2MClientBuilderTest {
     @Test
     void privateKeyJwkFileWrapsAMissingFileAsInvalidConfigurationException() {
         Path missing = tempDir.resolve("does-not-exist.jwk.json");
+        VerifierM2MClient.Builder builder = VerifierM2MClient.builder();
 
-        assertThatThrownBy(() -> VerifierM2MClient.builder().privateKeyJwkFile(missing))
+        assertThatThrownBy(() -> builder.privateKeyJwkFile(missing))
                 .isInstanceOf(InvalidConfigurationException.class)
                 .hasCauseInstanceOf(IOException.class);
     }
@@ -60,8 +61,9 @@ class VerifierM2MClientBuilderTest {
     @Test
     void credentialJwtFileWrapsAMissingFileAsInvalidConfigurationException() {
         Path missing = tempDir.resolve("does-not-exist.jwt");
+        VerifierM2MClient.Builder builder = VerifierM2MClient.builder();
 
-        assertThatThrownBy(() -> VerifierM2MClient.builder().credentialJwtFile(missing))
+        assertThatThrownBy(() -> builder.credentialJwtFile(missing))
                 .isInstanceOf(InvalidConfigurationException.class)
                 .hasCauseInstanceOf(IOException.class);
     }

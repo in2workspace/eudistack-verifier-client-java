@@ -54,8 +54,9 @@ class TokenEndpointClientTest {
         wireMockServer.stubFor(
                 post(urlEqualTo("/oidc/token"))
                         .willReturn(aResponse().withStatus(200).withBody("not-json")));
+        URI endpoint = tokenEndpoint();
 
-        assertThatThrownBy(() -> client.requestToken(tokenEndpoint(), "client-id", "assertion", "tenant"))
+        assertThatThrownBy(() -> client.requestToken(endpoint, "client-id", "assertion", "tenant"))
                 .isInstanceOf(TokenRequestFailedException.class);
     }
 
@@ -68,8 +69,9 @@ class TokenEndpointClientTest {
                                         .withStatus(200)
                                         .withHeader("Content-Type", "application/json")
                                         .withBody("{\"token_type\":\"Bearer\"}")));
+        URI endpoint = tokenEndpoint();
 
-        assertThatThrownBy(() -> client.requestToken(tokenEndpoint(), "client-id", "assertion", "tenant"))
+        assertThatThrownBy(() -> client.requestToken(endpoint, "client-id", "assertion", "tenant"))
                 .isInstanceOf(TokenRequestFailedException.class)
                 .satisfies(e -> assertThat(((TokenRequestFailedException) e).httpStatus()).isEqualTo(200));
     }
