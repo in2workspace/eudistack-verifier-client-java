@@ -127,7 +127,7 @@ public final class ConfigLoader {
             return String.valueOf(inline);
         }
         if (filePath != null) {
-            Path resolved = source.resolveSibling(String.valueOf(filePath));
+            Path resolved = resolveWithinConfigDirectory(source, String.valueOf(filePath), pathKey);
             try {
                 return Files.readString(resolved);
             } catch (IOException e) {
@@ -137,6 +137,28 @@ public final class ConfigLoader {
         }
         throw new InvalidConfigurationException(
                 "Config file " + source + " is missing '" + inlineKey + "' or '" + pathKey + "'");
+    }
+
+    /**
+     * Resolves a {@code *-path} config value relative to the config file's own directory,
+     * rejecting anything that escapes it (absolute paths, {@code ../} traversal). A config
+     * file that could reference an arbitrary filesystem path would let anyone able to write
+     * that config file read files they otherwise couldn't — e.g. a sibling service's private
+     * key — and have this SDK transmit them to the configured Verifier.
+     */
+    private static Path resolveWithinConfigDirectory(Path source, String rawPath, String pathKey) {
+        Path configDir = source.toAbsolutePath().normalize().getParent();
+        Path candidate = Path.of(rawPath);
+        if (candidate.isAbsolute()) {
+            throw new InvalidConfigurationException(
+                    "'" + pathKey + "' must be a relative path, not absolute: " + rawPath);
+        }
+        Path resolved = configDir.resolve(candidate).normalize();
+        if (!resolved.startsWith(configDir)) {
+            throw new InvalidConfigurationException(
+                    "'" + pathKey + "' must not escape the config file's directory: " + rawPath);
+        }
+        return resolved;
     }
 
     private static String requireString(Map<String, Object> raw, String key, Path source) {
