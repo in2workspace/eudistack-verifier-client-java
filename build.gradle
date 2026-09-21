@@ -1,0 +1,99 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id 'checkstyle'
+    id 'com.diffplug.spotless' version '6.25.0'
+    id 'com.vanniktech.maven.publish' version '0.30.0'
+}
+
+group = 'com.eudistack'
+version = '0.1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+jacoco {
+    toolVersion = '0.8.14'
+}
+
+checkstyle {
+    toolVersion = '10.20.1'
+    configFile = file('config/checkstyle/checkstyle.xml')
+    maxWarnings = 0
+}
+
+spotless {
+    java {
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+        indentWithSpaces(4)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'com.nimbusds:nimbus-jose-jwt:9.40'
+
+    compileOnly 'org.yaml:snakeyaml:2.3'
+
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.assertj:assertj-core:3.26.3'
+    testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
+    testImplementation 'org.yaml:snakeyaml:2.3'
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+
+    pom {
+        name = 'EUDIStack Verifier Client'
+        description = 'Java SDK for M2M (client_credentials) authentication against OID4VP-style Verifiers, using private_key_jwt (RFC 7523) with a self-signed VP-JWT as proof of possession.'
+        url = 'https://github.com/in2workspace/eudistack-verifier-client-java'
+
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+
+        developers {
+            developer {
+                id = 'in2workspace'
+                name = 'EUDIStack'
+                url = 'https://github.com/in2workspace'
+            }
+        }
+
+        scm {
+            url = 'https://github.com/in2workspace/eudistack-verifier-client-java'
+            connection = 'scm:git:https://github.com/in2workspace/eudistack-verifier-client-java.git'
+            developerConnection = 'scm:git:ssh://git@github.com/in2workspace/eudistack-verifier-client-java.git'
+        }
+    }
+}
