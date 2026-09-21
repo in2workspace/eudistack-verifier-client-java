@@ -7,7 +7,9 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 /**
- * Decodes a {@code did:key} identifier for a P-256 (secp256r1) EC public key.
+ * Decodes a {@code did:key} identifier (optionally a DID URL with a verification-method
+ * fragment, e.g. {@code did:key:z...#z...} — the form used in a {@code cnf.kid} confirmation
+ * claim per RFC 7800 §3.4) for a P-256 (secp256r1) EC public key.
  *
  * <p>A {@code did:key} for P-256 is: the literal prefix {@code did:key:z}, followed by the
  * Base58btc (multibase 'z') encoding of {@code <multicodec 0x1200><compressed EC point>}. See
@@ -25,17 +27,28 @@ public final class DidKeyCodec {
 
     private DidKeyCodec() {}
 
-    /** {@code true} if the given confirmation-key value is a {@code did:key} identifier. */
+    /**
+     * {@code true} if the given confirmation-key value is a {@code did:key} identifier, with
+     * or without a {@code #...} verification-method fragment.
+     */
     public static boolean isDidKey(String cnfValue) {
         return cnfValue != null && cnfValue.startsWith(DID_KEY_PREFIX);
     }
 
-    /** Decodes a P-256 {@code did:key:z...} identifier into its public {@link ECKey}. */
+    /**
+     * Decodes a P-256 {@code did:key:z...} identifier — or a DID URL of the form
+     * {@code did:key:z...#z...} — into its public {@link ECKey}. The fragment, when present,
+     * identifies a verification method within the DID document; for {@code did:key} it is
+     * always identical to the method-specific identifier, so it carries no extra information
+     * and is discarded before decoding.
+     */
     public static ECKey decodeP256PublicKey(String didKey) {
         if (!isDidKey(didKey)) {
             throw new InvalidConfigurationException("Not a did:key identifier: " + didKey);
         }
-        String multibaseBody = didKey.substring(DID_KEY_PREFIX.length());
+        int fragmentIndex = didKey.indexOf('#');
+        String withoutFragment = fragmentIndex < 0 ? didKey : didKey.substring(0, fragmentIndex);
+        String multibaseBody = withoutFragment.substring(DID_KEY_PREFIX.length());
         byte[] decoded = base58Decode(multibaseBody);
 
         if (decoded.length < P256_MULTICODEC_PREFIX.length

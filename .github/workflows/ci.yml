@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -30,10 +32,17 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
-      - name: Build, test and analyze
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew check sonar --no-daemon
+      - name: Build and test
+        run: ./gradlew check --no-daemon
+
+      # Dependabot-triggered runs don't get repo secrets (GitHub withholds them from
+      # pull_request events opened by Dependabot, by design) — SONAR_TOKEN is empty there
+      # and the sonar task fails outright rather than skipping. Only run it when the
+      # secret is actually available, so those PRs go green on the real quality gate
+      # (build/test/checkstyle/coverage) without a Sonar analysis attempt that can't work.
+      - name: SonarQube analysis
+        if: ${{ env.SONAR_TOKEN != '' }}
+        run: ./gradlew sonar --no-daemon
 
       - name: Upload test reports
         if: always()
