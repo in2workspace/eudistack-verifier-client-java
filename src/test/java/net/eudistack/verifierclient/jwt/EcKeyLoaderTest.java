@@ -44,18 +44,18 @@ class EcKeyLoaderTest {
 
     @Test
     void rejectsAKeyOnTheWrongCurve() throws Exception {
-        ECKey p384Key = new ECKeyGenerator(Curve.P_384).generate();
+        String p384KeyJson = new ECKeyGenerator(Curve.P_384).generate().toJSONString();
 
-        assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey(p384Key.toJSONString()))
+        assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey(p384KeyJson))
                 .isInstanceOf(InvalidConfigurationException.class)
                 .hasMessageContaining("P-256");
     }
 
     @Test
     void rejectsAPublicOnlyKeyWithNoPrivateComponent() throws Exception {
-        ECKey publicOnlyKey = new ECKeyGenerator(Curve.P_256).generate().toPublicJWK();
+        String publicOnlyKeyJson = new ECKeyGenerator(Curve.P_256).generate().toPublicJWK().toJSONString();
 
-        assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey(publicOnlyKey.toJSONString()))
+        assertThatThrownBy(() -> EcKeyLoader.loadPrivateKey(publicOnlyKeyJson))
                 .isInstanceOf(InvalidConfigurationException.class)
                 .hasMessageContaining("private component");
     }
